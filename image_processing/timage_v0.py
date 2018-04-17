@@ -10,19 +10,21 @@ def imm(image):
     ax.imshow(image, cmap = 'gray')
     ax.axis('off')
 
-def clean_xray(image):
+def clean_xray(img):
+    image = sk.img_as_float(img.copy())
     if type(image) is not np.ndarray:
         raise TypeError('Input must be numpy ndarray.')
     else:
-        up_thres = image.mean() + 4*image.std()
-        down_thres = image.mean() - 4*image.std()
-        image[image>up_thres] = image.mean()
-        image[image<down_thres] = image.mean()
-    return image
+        p1 = np.percentile(image, 0.0001)
+        p80, p99 = np.percentile(image, (80, 99.99))
+        print("mean:",image.mean(),'p80: ',p80,'p99: ',p99)
+        image[image > p99] = p80
+        image[image<p1] = p1
+    return sk.img_as_ubyte(image)
 
-def auto_adjust_TEM(image):
-    image = exposure.equalize_adapthist(exposure.adjust_sigmoid(clean_xray(image)))
-    return image
+# def auto_adjust_TEM(image):
+#     image = exposure.equalize_adapthist(exposure.adjust_sigmoid(clean_xray(image)))
+#     return image
 
 def adjust_pipeline(directory_list):
     for directory in directory_list:
@@ -35,6 +37,6 @@ def adjust_pipeline(directory_list):
         file_list = images.files
         name_list = [name.split('/')[-1].split('.')[0] for name in file_list]
         for idx, img in enumerate(images):
-            img = auto_adjust_TEM(img)
-            io.imsave(new_directory+'/'+name_list[idx]+'.png',img)
+            image = clean_xray(img)
+            plt.imsave(new_directory+'/'+name_list[idx]+'.png',image, cmap='gray')
         print('done!')

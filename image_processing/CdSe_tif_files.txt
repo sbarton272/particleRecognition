@@ -1,7 +1,7 @@
-/Users/kategroschner/Box Sync/Research/HR-TEM/20180329/101727H_from20180218/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20180209/101727H_prep20180208_plasma/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20180220/101727H_prep20180208_sampleA/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20180227/20180227_101729F_prepped20171204/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20180117/101727H_sampleprep20180116/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20171117_CdSe/8bit
-/Users/kategroschner/Box Sync/Research/HR-TEM/20171211_CdSe_101729F_TEAM05/101729F_sampleprep20171204/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20180329/101727H_from20180218/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20180209/101727H_prep20180208_plasma/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20180220/101727H_prep20180208_sampleA/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20180227/20180227_101729F_prepped20171204/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20180117/101727H_sampleprep20180116/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20171117_CdSe/8bit
+/Users/cgroschner/Box Sync/Research/HR-TEM/20171211_CdSe_101729F_TEAM05/101729F_sampleprep20171204/8bit
