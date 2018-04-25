@@ -48,9 +48,8 @@ def adjust_pipeline(directory_list):
                 name = dm3.split('/')[-1].split('.')[0]
                 imsave(new_directory+'/'+name+'.png', img, format="png", cmap=cm.gray)
             elif img.shape[0] == 1024 and img.shape[1] == 1024:
-                pass
-                # name = dm3.split('/')[-1].split('.')[0]
-                # imsave(new_directory+'/'+name+'.png', exposure.equalize_adapthist(xray_correct(img)), format="png", cmap=cm.gray)
+                name = dm3.split('/')[-1].split('.')[0]
+                imsave(new_directory+'/'+name+'.png', exposure.equalize_adapthist(xray_correct(img)), format="png", cmap=cm.gray)
         i += 1
         print('{} / {} directories complete'.format(i,len(directory_list)))
     print('done!')
