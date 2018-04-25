@@ -1,6 +1,7 @@
 import timage_v0 as tim
 import sys
 
+
 fname = input('paste directory colletion text file name here or type q to quit: ',)
 if fname == 'q':
     sys.exit()
