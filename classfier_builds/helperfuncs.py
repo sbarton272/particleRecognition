@@ -79,11 +79,11 @@ def slicing_for_assembley(directory):
      diretory that is the source. Same process as image_slice_small but all
      regions are saved so that regions can be stitched back together"""
     image_file_list = glob(directory+'/images/*.png')
-    image_new_directory = directory + '/small_sliced_images/'
+    image_new_directory = directory + '/small_sliced_images_asmbl/'
     if os.path.isdir(image_new_directory) != True:
         os.mkdir(image_new_directory)
     label_file_list = glob(directory+'/labels/*.png')
-    label_new_directory = directory + '/small_sliced_labels/'
+    label_new_directory = directory + '/small_sliced_labels_asmbl/'
     if os.path.isdir(label_new_directory) != True:
         os.mkdir(label_new_directory)
     image_name_list = [name.split('/')[-1].split('.')[0] for name in image_file_list]
