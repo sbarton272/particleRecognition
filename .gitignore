@@ -2,3 +2,6 @@ venv
 ttldata_nnptl_tf.npy
 ttltargets_nnptl_tf.npy
 CdSe_tif_files.txt
+.DS_Store
+*pycache*
+*ipynb_checkpoints*
