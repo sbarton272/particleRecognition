@@ -15,11 +15,12 @@ def interplot(image):
         ax.imshow(image, cmap = 'gray', clim = irange)
         ax.axis('off')
     def slide(x):
-        imm(test_image,x)
+        imm(image,x)
     x = widgets.IntRangeSlider(value = slider_range,min = slider_range[0],max = slider_range[1],continuous_update = False)
     widgets.interact(slide,x=x)
 
 
 def open_dm3(dm3FileList, imageNum):
-    image = dm.dmReader(dm3FileList[imageNum])['data']
-    return image
+    image = dm.dmReader(dm3FileList[imageNum])
+    print(dm3FileList[imageNum])
+    return image['data']
