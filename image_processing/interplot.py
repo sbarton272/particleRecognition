@@ -1,4 +1,4 @@
-from ncempy.io import dm
+# from ncempy.io import dm
 import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
@@ -21,7 +21,7 @@ def interplot(image):
 
 
 def open_dm3(dm3FileList, imageNum):
-    image = dm.dmReader(dm3FileList[imageNum])
+    image = dmReader(dm3FileList[imageNum])
     print(dm3FileList[imageNum])
     return image['data']
 
