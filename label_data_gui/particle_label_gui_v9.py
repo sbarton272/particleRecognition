@@ -175,6 +175,7 @@ def run():
     data.radius = 50
     data.fileCounter = 0
     init(data)
+    print('shift+click to select particle','\n', 'arrow keys move circle','\n', '"e" enlarges circle, "d" decreases circle', '\n', '"y" to label stacking fault','\n', '"n" to label no visible stacking fault','\n', '"o" if only one plane of particle is resolved','\n', 'hit enter to continue to next image', '\n', '"q" quits program')
     
 
     #run the main image labeling gui
