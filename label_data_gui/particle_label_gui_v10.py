@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import glob
 import os
 import numpy as np
+from ast import literal_eval
 
 
 ####################################
@@ -12,17 +13,15 @@ import numpy as np
 
 def init(data):
     data.circleCenters = [ ]
-    data.recordCircleCenters = [ ]
     data.radii = [ ]
     data.labels = [ ]
-    data.newCircleCenter = [0,0]
     data.imageSize = []
 
 def getFiles(root):
     directory = filedialog.askdirectory() 
     root.update()  
     name = "."
-    path = directory + "/*.tif"
+    path = directory + "/*.png"
     txtpath = directory + "/*.txt"  
     files = []
     txtfiles = []
@@ -31,20 +30,61 @@ def getFiles(root):
     for filename in glob.glob(txtpath):
         txtfiles.append(filename)
     
-    return(files, txtfiles)
+    return(files, txtfiles, directory)
+    
+def txt_reader(file):
+    txt_info = open(file,'r')
+    txt = []
+    centers = []
+    radii = []
+    labels = []
+    for line in txt_info:
+        if line == '\n':
+            pass
+        else:
+            line = line.strip('\n')
+            txt.append(line)
+    if 'Weird' in txt[0].split(' '):
+        weird = txt[0]
+    else:
+        weird = 'Not Weird Data'
+    weird_stop = txt.index('Particle Location:')
+    center_stop = txt.index('Radius Size:')
+    radius_stop = txt.index('Defect Label:')
+    defect_stop = txt.index('Image Size:')
+    for loc in txt[weird_stop+1:center_stop]:
+        centers.append(literal_eval(loc))
+    for loc in txt[center_stop+1:radius_stop] :
+        radii.append(int(loc))
+    for loc in txt[radius_stop+1:defect_stop]:
+        labels.append(loc)
+    return(centers, radii,labels, weird)
 
 def imageOpen(files,data):
     image = Image.open(files[data.fileCounter])
     data.imageSize.append(image.size)
     photo = ImageTk.PhotoImage(image)
-    return(photo)
+    imgname = files[data.fileCounter].split('/')[-1].split('.')[0]
+    if imgname in data.textnames:
+        txtfile = data.directory+'/'+imgname+'.txt'
+        centers, radii, labels, weird = txt_reader(txtfile)
+    else:
+        centers = []
+        radii = []
+        labels = []
+        weird = 'Not Weird Data'
+    return(photo, centers, radii, labels, weird)
     
 def saveLabel(files,data):
     split = files[data.fileCounter].split(".")
     fname = split[0] + ".txt"
     label_file = open(fname, "w")
+    if data.weird == 'Weird Data':
+        label_file.write('Weird Data'+ '\n')
+    else:
+        label_file.write('Not Weird Data'+ '\n')
     label_file.write("Particle Location:\n")
-    for loc in data.recordCircleCenters:
+    for loc in data.circleCenters:
         label_file.write(str(loc)+"\n")
     label_file.write("\n"+"Radius Size:"+"\n")
     for r in data.radii:
@@ -52,10 +92,6 @@ def saveLabel(files,data):
     label_file.write("\n"+"Defect Label:"+"\n")
     for label in data.labels:
         label_file.write(label+"\n")
-    if data.weird == 'weird':
-        label_file.write('Weird Data')
-    else:
-        label_file.write('Not Weird Data')
     label_file.write("\n"+"Image Size:"+"\n")
     for size in data.imageSize: 
         label_file.write(str(size)+"\n")
@@ -63,18 +99,19 @@ def saveLabel(files,data):
 
 def mousePressed(event, data,canvas, scrollbar):
     y_offset = scrollbar.get()[0]*1024
-    data.newCircleCenter = [event.x,event.y+y_offset] 
-    recordCircleCenter = [float(event.x),event.y+y_offset] 
+    data.newCircleCenter = [float(event.x),event.y+y_offset] 
+    print(data.newCircleCenter)
+    print(data.circleCenters)
     data.circleCenters.append(data.newCircleCenter)
-    data.recordCircleCenters.append(recordCircleCenter)
+    print(data.circleCenters)
     data.radii.append(data.radius)
     data.labels.append('null') #this marks particle as found but not atomic rez
+    print(data.circleCenters)
 
 def keyPressed(event, data,files,root):
     if (event.keysym == "BackSpace"):
         if (len(data.circleCenters) > 0):
             data.circleCenters.pop()
-            data.recordCircleCenters.pop()
             data.radii.pop()
             data.labels.pop()
         else:
@@ -92,25 +129,25 @@ def keyPressed(event, data,files,root):
         data.newCircleCenter[1] -= 1
         data.circleCenters.pop()
         data.circleCenters.append(data.newCircleCenter)
-        data.recordCircleCenters[-1][1] -= 1
     if event.keysym == "Down": #move circle down
         data.newCircleCenter[1] += 1
         data.circleCenters.pop()
         data.circleCenters.append(data.newCircleCenter)
-        data.recordCircleCenters[-1][1] += 1
     if event.keysym == "w":
-        data.weird = 'weird'
-        print('Marked image as weird')
+        if data.weird == 'Weird Data':
+            data.weird = 'Not Weird Data'
+            print('Marked image not weird')
+        else:
+            data.weird = 'Weird Data'
+            print('Marked image as weird')
     if event.keysym == "Left": #move circle left
         data.newCircleCenter[0] -= 1
         data.circleCenters.pop()
         data.circleCenters.append(data.newCircleCenter)
-        data.recordCircleCenters[-1][0] -= 1
     if event.keysym == "Right":
         data.newCircleCenter[0] += 1
         data.circleCenters.pop()
         data.circleCenters.append(data.newCircleCenter)
-        data.recordCircleCenters[-1][0] += 1
     if (event.char == "y"): #this means there is a stacking fault
         data.labels.pop()
         data.labels.append('yes')
@@ -132,21 +169,19 @@ def keyPressed(event, data,files,root):
             print('No more images to look at!')
             quitGui(root)
         else:
-            data.photo = imageOpen(files,data)
             data.circleCenters = [ ]
-            data.recordCircleCenters = [ ]
             data.radii = [ ]
             data.labels = [ ]
             data.imageSize = []
+            data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
             root.title(files[data.fileCounter])
     if event.keysym == "bracketleft":
         data.fileCounter -= 1
-        data.photo = imageOpen(files,data)
         data.circleCenters = [ ]
-        data.recordCircleCenters = [ ]
         data.radii = [ ]
         data.labels = [ ]
         data.imageSize = []
+        data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
         root.title(files[data.fileCounter])
     if event.keysym == "Return":
         saveLabel(files,data)
@@ -155,12 +190,11 @@ def keyPressed(event, data,files,root):
             print('No more images to look at!')
             quitGui(root)
         else:
-            data.photo = imageOpen(files,data)
             data.circleCenters = [ ]
-            data.recordCircleCenters = [ ]
             data.radii = [ ]
             data.labels = [ ]
             data.imageSize = []
+            data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
             root.title(files[data.fileCounter])
     if (event.char == "q"):
         quitGui(root)
@@ -189,7 +223,8 @@ def redrawAll(canvas, data):
     # draw the text
     for idx,center in enumerate(data.circleCenters):
         canvas.create_text(center[0], center[1]-(data.radii[idx]+5),activefill = 'magenta',fill = 'black', font = ('Helvetica', '18','bold'),text=data.labels[idx])
-    
+    if data.weird == 'Weird Data':
+        canvas.create_text(5, data.height-10, activefill = None, fill = 'magenta', font = ('Helvetica', '20','bold'), text = 'W')
 
 def quitGui(root):
     print('Quiting...')
@@ -235,8 +270,11 @@ def run():
 
     #run the main image labeling gui
     root = Tk()
-    files = getFiles(root)[0]
-    data.photo = imageOpen(files,data)
+    files, textfiles, data.directory = getFiles(root)
+    data.textFilesCounter = len(textfiles)
+    data.textnames = [name.split('/')[-1].split('.')[0] for name in textfiles]
+    data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
+    print(data.circleCenters)
     root.title(files[data.fileCounter])
     data.width = 1024
     data.height = 1024
@@ -274,6 +312,6 @@ def run():
     # and launch the app
     #root.mainloop()  # blocks until window is closed
     print("bye!")
-    print(data.recordCircleCenters,data.radii, data.labels)
+    print(data.circleCenters,data.radii, data.labels)
 
 run()
