@@ -18,20 +18,20 @@ def init(data):
     data.imageSize = []
 
 def getFiles(root):
-    directory = filedialog.askdirectory() 
-    root.update()  
+    directory = filedialog.askdirectory()
+    root.update()
     name = "."
     path = directory + "/*.png"
-    txtpath = directory + "/*.txt"  
+    txtpath = directory + "/*.txt"
     files = []
     txtfiles = []
     for fname in glob.glob(path):
         files.append(fname)
     for filename in glob.glob(txtpath):
         txtfiles.append(filename)
-    
+
     return(files, txtfiles, directory)
-    
+
 def txt_reader(file):
     txt_info = open(file,'r')
     txt = []
@@ -74,7 +74,7 @@ def imageOpen(files,data):
         labels = []
         weird = 'Not Weird Data'
     return(photo, centers, radii, labels, weird)
-    
+
 def saveLabel(files,data):
     split = files[data.fileCounter].split(".")
     fname = split[0] + ".txt"
@@ -93,20 +93,16 @@ def saveLabel(files,data):
     for label in data.labels:
         label_file.write(label+"\n")
     label_file.write("\n"+"Image Size:"+"\n")
-    for size in data.imageSize: 
+    for size in data.imageSize:
         label_file.write(str(size)+"\n")
     label_file.close()
 
 def mousePressed(event, data,canvas, scrollbar):
     y_offset = scrollbar.get()[0]*1024
-    data.newCircleCenter = [float(event.x),event.y+y_offset] 
-    print(data.newCircleCenter)
-    print(data.circleCenters)
+    data.newCircleCenter = [float(event.x),event.y+y_offset]
     data.circleCenters.append(data.newCircleCenter)
-    print(data.circleCenters)
     data.radii.append(data.radius)
     data.labels.append('null') #this marks particle as found but not atomic rez
-    print(data.circleCenters)
 
 def keyPressed(event, data,files,root):
     if (event.keysym == "BackSpace"):
@@ -117,7 +113,6 @@ def keyPressed(event, data,files,root):
         else:
             print("No more circles to delete!")
     if event.char == "e": #enlarge circle
-        print(event.state)
         data.radius += 1
         data.radii.pop()
         data.radii.append(data.radius)
@@ -196,6 +191,10 @@ def keyPressed(event, data,files,root):
             data.imageSize = []
             data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
             root.title(files[data.fileCounter])
+            txtpath = data.directory + "/*.txt"
+            txtfiles = glob.glob(txtpath)
+            data.textFilesCounter = len(txtfiles)
+            data.textnames = [name.split('/')[-1].split('.')[0] for name in txtfiles]
     if (event.char == "q"):
         quitGui(root)
 def shiftEKeyPressed(event, data,files,root):
@@ -207,8 +206,8 @@ def shiftDKeyPressed(event, data,files,root):
     data.radius -= 20
     data.radii.pop()
     data.radii.append(data.radius)
-    
-    
+
+
 def redrawAll(canvas, data):
     #draw the photo
     canvas.create_image(0,0,image = data.photo,anchor = "nw")
@@ -239,7 +238,7 @@ def run():
         canvas.create_rectangle(0, 0, data.width, data.height,
                                 fill='white', width=0)
         redrawAll(canvas, data)
-        canvas.update()    
+        canvas.update()
 
     def mousePressedWrapper(event, canvas, data, scrollbar):
         mousePressed(event, data, canvas, scrollbar)
@@ -259,14 +258,14 @@ def run():
         redrawAllWrapper(canvas, data)
     # Set up data structure
     class Struct(object): pass
-    
+
     #initialize all the required data
     data = Struct()
     data.radius = 50
     data.fileCounter = 0
     init(data)
     print('shift+click to select particle','\n', 'arrow keys move circle','\n', '"e" enlarges circle, "d" decreases circle', '\n', '"y" to label stacking fault','\n', '"n" to label no visible stacking fault','\n', '"o" if only one plane of particle is resolved','\n', 'hit enter to continue to next image', '\n', '"q" quits program')
-    
+
 
     #run the main image labeling gui
     root = Tk()
@@ -274,7 +273,6 @@ def run():
     data.textFilesCounter = len(textfiles)
     data.textnames = [name.split('/')[-1].split('.')[0] for name in textfiles]
     data.photo, data.circleCenters, data.radii, data.labels, data.weird = imageOpen(files,data)
-    print(data.circleCenters)
     root.title(files[data.fileCounter])
     data.width = 1024
     data.height = 1024
@@ -282,8 +280,8 @@ def run():
 
     # create the root and the canvas
     canvas = Canvas(width=data.width, height=data.height)
-    
-    
+
+
     #Create scrollbar
     scrollbar = Scrollbar(root)
     scrollbar.config(command = canvas.yview)
@@ -292,7 +290,7 @@ def run():
     canvas.pack(side = LEFT, expand = True, fill = 'both')
     canvas.create_image(0,0,image = data.photo, anchor = "nw")
     canvas.config(scrollregion = canvas.bbox(ALL))
-    
+
     # set up events
     root.bind("<Shift-Button-1>", lambda event:
                             mousePressedWrapper(event, canvas, data,scrollbar))
@@ -304,11 +302,11 @@ def run():
                             keyPressedWrapper(event, canvas, data,files,root))
 
     if data.fileCounter < len(files):
-        redrawAll(canvas, data) 
+        redrawAll(canvas, data)
         root.mainloop()
     else:
         pass
-    
+
     # and launch the app
     #root.mainloop()  # blocks until window is closed
     print("bye!")
