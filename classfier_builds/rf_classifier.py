@@ -35,29 +35,68 @@ def file_relabel(og_dir, new_dir):
     filename."""
     dir_list = os.listdir(og_dir)
     print(dir_list)
+    skip_count = 0
     for direct in dir_list:
-        pngs = glob(og_dir+'/'+direct+'/*/adjustedPNG2/*.png')
-        print(len(pngs))
-        txts = glob(og_dir+'/'+direct+'/*/adjustedPNG2/*.txt')
-        print(len(txts))
+        if direct == '.DS_Store':
+            pass
+        else:
+            pngs = glob(og_dir+'/'+direct+'/*/adjustedPNG2/*.png')
+            print(len(pngs))
+            txts = glob(og_dir+'/'+direct+'/*/adjustedPNG2/*.txt')
+            print(len(txts))
+            for idx, txt in enumerate(txts):
+                txtname = txt.split('.')[0].split('/')[-1]
+                newname = direct+'_'+txtname
+                if txtname == pngs[idx].split('.')[0].split('/')[-1]:
+                    shutil.copy2(txt,new_dir+'/'+newname+'.txt')
+                    shutil.copy2(pngs[idx],new_dir+'/'+newname+'.png')
+                else:
+                    if txtname == pngs[skip_count+idx+1].split('.')[0].split('/')[-1]:
+                        shutil.copy2(txt,new_dir+'/'+newname+'.txt')
+                        shutil.copy2(pngs[idx],new_dir+'/'+newname+'.png')
+                        skip_count += 1
+                    else:
+                        pass
     print('done')
 
+def txt_reader(file):
+    txt_info = open(file,'r')
+    txt = []
+    centers = []
+    radii = []
+    labels = []
+    for line in txt_info:
+        if line == '\n':
+            pass
+        else:
+            line = line.strip('\n')
+            txt.append(line)
+    if 'Weird' in txt[0].split(' ')[0]:
+        weird = txt[0]
+    else:
+        weird = 'Not Weird Data'
+    weird_stop = txt.index('Particle Location:')
+    center_stop = txt.index('Radius Size:')
+    radius_stop = txt.index('Defect Label:')
+    defect_stop = txt.index('Image Size:')
+    for loc in txt[weird_stop+1:center_stop]:
+        centers.append(literal_eval(loc))
+    for loc in txt[center_stop+1:radius_stop] :
+        radii.append(int(loc))
+    for loc in txt[radius_stop+1:defect_stop]:
+        labels.append(loc)
+    return(centers, radii,labels, weird)
 
-def rf_label_reader(txt_file, image_file):
+def rf_label_reader(txt_file, image_file, use_weird = True):
     """Reads in text file and associated image file and using the information in the text file
     makes an array of labels and saves the associated region of the image corrsponding to that label
     to create training and testing data for random forest creation"""
-    txt_info = open(txt_file,'r')
-    image = io.imread(image_file, as_grey=True)
+    image = io.imread(image_file, as_grey = True)
     #test for 1024x1024 image
     if image.shape != (1024,1024):
         raise RuntimeError('Image is not required shape: 1024x1024')
 
     #setup required variables
-    txt = []
-    centers = []
-    radii = []
-    labels = []
     image_cuts = []
     empty_count = 0 #how many image cuts generated with the label empty meaning no particle present
     null_count = 0 #how many image cuts generated with the label null meaning particle present but not atomic resolution
@@ -65,18 +104,15 @@ def rf_label_reader(txt_file, image_file):
     yes_count = 0 #how many image cuts generated with the label yes meaning particle present, atomic res, has defect
 
     #read text file
-    for line in txt_info:
-        if line == '\n':
-            pass
-        else:
-            line = line.strip('\n')
-            txt.append(line)
-    center_stop = txt.index('Radius Size:')
-    radius_stop = txt.index('Defect Label:')
-    label_stop = txt.index('Image Size:')
+    centers, radii, labels, weird = txt_reader(txt_file)
+
+    #determine whether to include weird data in the dataset
+    if use_weird == False:
+        if weird == 'Weird Data':
+            return 'skip', 'skip', 'skip', 'skip', 'skip', 'skip'
 
     #create image and label pair
-    if radius_stop - center_stop == 1: #ID if there are no particles present in text file
+    if len(centers) == 0: #ID if there are no particles present in text file
         for x in range(0,4*256,256):
             for y in range(0,4*256,256):
                 image_slice = image[x:x+256,y:y+256]
@@ -84,18 +120,20 @@ def rf_label_reader(txt_file, image_file):
                 labels.append('empty')
                 empty_count += 1
     else:
-        for loc in txt[1:center_stop]:
-            centers.append(literal_eval(loc))
-        for loc in txt[center_stop+1:radius_stop] :
-            radii.append(int(loc))
-        for loc in txt[radius_stop+1:label_stop] :
-            labels.append(loc)
+        for idx, loc in enumerate(labels):
             if loc == 'null':
                 null_count += 1
             if loc == 'no':
                 no_count += 1
             if loc == 'yes':
                 yes_count += 1
+            if loc == 'edgeDislcn':
+                yes_count += 1
+                labels[idx] = 'yes'
+            if loc == 'surfaceSF':
+                yes_count += 1
+                labels[idx] = 'yes'
+
         for idx, center in enumerate(centers): #slice up image to create images to feed into
             x_min = center[0]-radii[idx]-2
             x_max = center[0]+radii[idx]+2
@@ -136,16 +174,16 @@ def rotate(df):
     print('Done!')
     return df
 
-def rf_data_pipeline(directory):
+def rf_data_pipeline(directory, use_weird = True):
     """Wrapper function to run through directories of labels and images to create random forest
     training and testing set. Returns a pandas dataframe with all the labels and associated image file names"""
     #set up required variables
-    if os.path.isdir(directory+'/text_files') == False:
-        raise RuntimeError('No text file directory present.')
-    if os.path.isdir(directory+'/images') == False:
-        raise RuntimeError('No image file directory present.')
-    txt_list = glob(directory+'/text_files/*.txt')
-    image_list = glob(directory+'/images/*.png')
+    txt_list = glob(directory+'*/*.txt')
+    image_list = glob(directory+'*/*.png')
+    # if os.path.isdir(directory+'/text_files') == False:
+    #     raise RuntimeError('No text file directory present.')
+    # if os.path.isdir(directory+'/images') == False:
+    #     raise RuntimeError('No image file directory present.')
     if len(txt_list) == 0:
         raise RuntimeError('No txt label files')
     if len(image_list) == 0:
@@ -170,7 +208,9 @@ def rf_data_pipeline(directory):
 
     #create dataframe of files and labels
     for idx, txt in enumerate(txt_list):
-        labels, image_cuts, empty_count, null_count, no_count, yes_count = rf_label_reader(txt, image_list[idx])
+        labels, image_cuts, empty_count, null_count, no_count, yes_count = rf_label_reader(txt, image_list[idx], use_weird)
+        if labels == 'skip':
+            continue
         total_empty_count += empty_count
         total_null_count += null_count
         total_no_count += no_count

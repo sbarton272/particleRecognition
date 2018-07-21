@@ -5,3 +5,5 @@ CdSe_tif_files.txt
 .DS_Store
 *pycache*
 *ipynb_checkpoints*
+*.npy
+*.h5
