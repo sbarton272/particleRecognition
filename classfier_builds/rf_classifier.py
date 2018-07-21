@@ -304,7 +304,9 @@ def feature_frame(file_label_df):
 def balance_data_classes(df,total_empty_count, total_null_count, total_no_count, total_yes_count):
     """Create two balanced dataframes of features with an equal number of each class, one with 80% of the data
     the other with 20% of the data"""
-    cutoff = int(np.array([total_empty_count, total_null_count, total_no_count, total_yes_count]).min()*0.8)
+    train_cutoff = int(np.array([total_empty_count, total_null_count, total_no_count, total_yes_count]).min()*0.7)
+    validate_cutoff = int(np.array([total_empty_count, total_null_count, total_no_count, total_yes_count]).min()*0.2)
+    test_cutoff = int(np.array([total_empty_count, total_null_count, total_no_count, total_yes_count]).min()*0.1)
     #shuffle input dataframe so that you do not end up with the same rotated image several times
     df = shuffle(df, random_state=0)
     bal_df1 = pd.DataFrame(columns=df.columns.values)
